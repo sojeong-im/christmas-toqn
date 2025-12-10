@@ -1,19 +1,17 @@
-// ⚠️ 중요: Firebase 콘솔에서 복사한 설정값을 아래에 덮어쓰기 하세요!
-// 1. https://console.firebase.google.com/ 접속
-// 2. 프로젝트 설정 -> 일반 -> 내 앱 -> SDK 설정 및 구성 -> 'Config' 선택
-// 3. const firebaseConfig = { ... }; 부분을 복사해서 아래에 붙여넣기
+// Firebase Configuration
+// This file is auto-generated based on user input.
 
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY_HERE",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyD_oxIEUGjcCjq4NW4aduH6SgxKEKEY5bM",
+    authDomain: "christmas-toqn.firebaseapp.com",
+    projectId: "christmas-toqn",
+    storageBucket: "christmas-toqn.firebasestorage.app",
+    messagingSenderId: "648263642402",
+    appId: "1:648263642402:web:aaa324421bd64917f3497b",
+    measurementId: "G-SMDJ1EF2PG"
 };
 
-// -----------------------------------------------------------
-// 아래는 건드리지 마세요! (Firebase 초기화 코드)
+// Initialize Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 

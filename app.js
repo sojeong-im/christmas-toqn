@@ -183,14 +183,17 @@ function renderMissionList() {
 
     missionCategories.forEach(cat => {
         const section = document.createElement('div');
-        section.innerHTML = `<div class="section-title">${cat.title}</div>`; // Icon removed from title string
+        section.innerHTML = `<div class="section-title">${cat.title}</div>`;
 
         cat.items.forEach(item => {
+            const count = (userMissionStatus[item.id] || 0);
+
             const el = document.createElement('div');
             el.className = 'mission-item';
             el.innerHTML = `
-                <div class="mission-checkbox" data-id="${item.id}" data-points="${cat.points}">
-                    ✔
+                <div class="mission-status">
+                    <button class="mission-btn-repeat" data-id="${item.id}" data-text="${item.text}">완료하기</button>
+                    <span class="mission-count-badge" id="count-${item.id}">${count}회</span>
                 </div>
                 <div class="mission-detail">
                     <div class="mission-text">${item.text}</div>
@@ -199,16 +202,23 @@ function renderMissionList() {
             `;
 
             // Event
-            const checkbox = el.querySelector('.mission-checkbox');
-            checkbox.addEventListener('click', () => {
-                if (checkbox.classList.contains('checked')) return; // Already done
-
-                // Simple confirm
-                const confirmDone = confirm(`"${item.text}" 미션을 완료하셨나요?`);
+            const btn = el.querySelector('.mission-btn-repeat');
+            btn.addEventListener('click', () => {
+                // Confirm dialog optional for repeated actions, but good for safety
+                // Or make it smoother without confirm if user wants speed? 
+                // Let's keep confirm to prevent accidental clicks
+                const confirmDone = confirm(`"${item.text}" 미션을 1회 완료하셨나요?`);
                 if (confirmDone) {
-                    checkbox.classList.add('checked');
+                    // Update Score & Count
                     updateScore(cat.points, item.id);
-                    showToast(`미션 완료! +${cat.points}점`);
+                    // Optimistic update UI
+                    const badge = document.getElementById(`count-${item.id}`);
+                    const current = parseInt(badge.innerText);
+                    badge.innerText = `${current + 1}회`;
+                    badge.classList.add('updated-flash');
+                    setTimeout(() => badge.classList.remove('updated-flash'), 500);
+
+                    showToast(`✅ 인증 완료! +${cat.points}점`);
                 }
             });
 
@@ -222,8 +232,10 @@ function renderMissionList() {
 function updateMissionUI() {
     // Check boxes based on loaded data
     Object.keys(userMissionStatus).forEach(mid => {
-        const box = document.querySelector(`.mission-checkbox[data-id="${mid}"]`);
-        if (box) box.classList.add('checked');
+        const badge = document.getElementById(`count-${mid}`);
+        if (badge) {
+            badge.innerText = `${userMissionStatus[mid]}회`;
+        }
     });
 }
 
