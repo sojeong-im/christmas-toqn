@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>트리 대전 상점 (새부기 마켓)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <!-- A. Header (Fixed) -->
+    <header class="app-header">
+        <div class="team-info">
+            <span class="team-badge" id="team-name">1팀</span>
+            <span class="team-label">의 현재 코인</span>
+        </div>
+        <div class="currency-display">
+            <span class="coin-icon">🪙</span>
+            <span class="coin-amount" id="coin-amount">1,250</span>
+            <span class="currency-name">새코인</span>
+        </div>
+    </header>
+
+    <!-- B. Tab Navigation -->
+    <nav class="tab-nav">
+        <button class="tab-btn active" data-tier="basic">🎁 기본 장식</button>
+        <button class="tab-btn" data-tier="core">💡 핵심 장식</button>
+        <button class="tab-btn" data-tier="highlight">🌟 하이라이트</button>
+    </nav>
+
+    <!-- C. Item List (Scrollable) -->
+    <main class="content-area">
+        <div class="item-grid" id="item-grid">
+            <!-- Items will be injected here via JS -->
+        </div>
+        
+        <!-- Secret Section Placeholder -->
+        <div id="secret-section" class="secret-section hidden">
+            <h3 class="secret-title">🤫 새부기의 비밀 창고</h3>
+            <div class="item-grid" id="secret-grid">
+                <!-- Secret Items -->
+            </div>
+        </div>
+        
+        <!-- Spacer for footer -->
+        <div class="footer-spacer"></div>
+    </main>
+
+    <!-- D. Footer (Fixed) -->
+    <footer class="app-footer">
+        <button class="footer-btn btn-tree">
+            <span>🎄</span> 트리 꾸미기
+        </button>
+        <button class="footer-btn btn-mission">
+            <span>🎯</span> 미션 하러 가기
+        </button>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden">
+        <div class="toast-content" id="toast-message"></div>
+    </div>
+
+    <!-- Buy Confirmation Modal -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+        <div class="modal">
+            <h3 class="modal-title">구매 확인</h3>
+            <p class="modal-text" id="modal-text"></p>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" id="modal-cancel">취소</button>
+                <button class="modal-btn confirm" id="modal-confirm">구매하기</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
