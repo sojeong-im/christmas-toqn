@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>트리 대전 관리자 페이지</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .team-card {
+            background: #fff;
+            border: 2px solid #eee;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .team-title {
+            font-weight: 700;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        .team-score {
+            font-size: 24px;
+            font-weight: 800;
+            color: #2E7D32;
+        }
+
+        /* Controls */
+        .control-panel {
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        select,
+        input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+
+        button {
+            padding: 8px 16px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #555;
+        }
+
+        .btn-add {
+            background: #2E7D32;
+        }
+
+        .btn-sub {
+            background: #D32F2F;
+        }
+
+        /* Login Overlay */
+        #login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .login-box {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="login-overlay">
+        <div class="login-box">
+            <h2>관리자 접속</h2>
+            <input type="password" id="admin-pw" placeholder="비밀번호 입력" style="margin-bottom: 10px;">
+            <br>
+            <button onclick="checkLogin()">접속하기</button>
+        </div>
+    </div>
+
+    <div class="container" id="admin-panel" style="display:none;">
+        <h1>🎅 트리 대전 상황실</h1>
+
+        <!-- Live Score -->
+        <div class="dashboard-grid" id="score-board">
+            <!-- Injected by JS -->
+            <div class="team-card">로딩중...</div>
+        </div>
+
+        <!-- Manual Control -->
+        <div class="control-panel">
+            <h3>🛠️ 점수 수동 지급/차감</h3>
+            <div class="control-row">
+                <select id="target-team">
+                    <option value="1">1팀</option>
+                    <option value="2">2팀</option>
+                    <option value="3">3팀</option>
+                    <option value="4">4팀</option>
+                </select>
+                <input type="number" id="manual-amount" placeholder="점수 (예: 100)" style="width: 100px;">
+                <button class="btn-add" onclick="manualUpdate(1)">지급 (+)</button>
+                <button class="btn-sub" onclick="manualUpdate(-1)">차감 (-)</button>
+            </div>
+            <p style="font-size: 12px; color: #888;">* 이벤트 당첨이나 패널티 적용 시 사용하세요.</p>
+        </div>
+
+        <!-- Log Link -->
+        <div style="margin-top: 20px; text-align: right;">
+            <a href="index.html" style="color: #666; text-decoration: none;">메인 페이지로 돌아가기 →</a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db, doc, onSnapshot, updateDoc, increment } from './firebase-config.js';
+
+        // Simple Password Check (Client-side only, not secure but enough for this event)
+        window.checkLogin = () => {
+            const pw = document.getElementById('admin-pw').value;
+            if (pw === '1225') { // Password: Christmas
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'block';
+                initDashboard();
+            } else {
+                alert('비밀번호가 틀렸습니다!');
+            }
+        };
+
+        function initDashboard() {
+            // Listen to all 4 teams
+            ['1', '2', '3', '4'].forEach(teamId => {
+                const docId = `team_${teamId.padStart(2, '0')}`;
+                onSnapshot(doc(db, "teams", docId), (snap) => {
+                    const data = snap.data() || { coins: 0 };
+                    updateCard(teamId, data);
+                });
+            });
+        }
+
+        function updateCard(teamId, data) {
+            const container = document.getElementById('score-board');
+            let card = document.getElementById(`card-${teamId}`);
+
+            if (!card) {
+                card = document.createElement('div');
+                card.id = `card-${teamId}`;
+                card.className = 'team-card';
+                container.appendChild(card);
+            }
+
+            // Calculate Total Missions Done
+            let totalMissions = 0;
+            if (data.missions) {
+                totalMissions = Object.values(data.missions).reduce((a, b) => a + b, 0);
+            }
+
+            card.innerHTML = `
+                <div class="team-title">${teamId}팀</div>
+                <div class="team-score">${(data.coins || 0).toLocaleString()}점</div>
+                <div style="font-size:12px; margin-top:4px; color:#888;">미션 수행: ${totalMissions}회</div>
+            `;
+        }
+
+        window.manualUpdate = async (multiplier) => {
+            const team = document.getElementById('target-team').value;
+            const amount = parseInt(document.getElementById('manual-amount').value);
+
+            if (!amount) return alert("점수를 입력하세요");
+
+            const finalAmount = amount * multiplier;
+            const docId = `team_${team.padStart(2, '0')}`;
+
+            if (confirm(`${team}팀에게 ${finalAmount}점을 적용하시겠습니까?`)) {
+                await updateDoc(doc(db, "teams", docId), {
+                    coins: increment(finalAmount)
+                });
+                alert("적용 완료!");
+                document.getElementById('manual-amount').value = '';
+            }
+        };
+    </script>
+</body>
+
+</html>
