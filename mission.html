@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>미션 목록 - 트리 대전</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+    <style>
+        /* Mission Specific Styles Override */
+        .mission-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-bottom: 20px;
+        }
+
+        .mission-card {
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.1s;
+        }
+
+        .mission-card:active {
+            transform: scale(0.99);
+        }
+
+        .mission-info {
+            flex: 1;
+        }
+
+        .mission-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--color-grey);
+            margin-bottom: 4px;
+        }
+
+        .mission-desc {
+            font-size: 12px;
+            color: var(--color-grey-medium);
+        }
+
+        .mission-reward {
+            background: #FFF8E1;
+            color: #FF8F00;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            min-width: 60px;
+            text-align: center;
+            border: 1px solid #FFE082;
+        }
+
+        .mission-btn {
+            background: var(--color-green);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: 12px;
+        }
+
+        .mission-btn.done {
+            background: #E0E0E0;
+            color: #999;
+            cursor: default;
+        }
+
+        .tab-btn {
+            font-size: 13px;
+            /* Slightly smaller for 3 tabs */
+        }
+    </style>
+</head>
+
+<body>
+    <header class="app-header">
+        <div class="team-info">
+            <button id="back-btn"
+                style="border:none; background:none; font-size:24px; margin-right:8px; cursor:pointer;">←</button>
+            <span class="team-badge" id="team-name">팀 정보 로딩중...</span>
+        </div>
+        <div class="currency-display">
+            <span class="coin-icon">🪙</span>
+            <span class="coin-amount" id="coin-amount">0</span>
+            <span class="currency-name">새코인</span>
+        </div>
+    </header>
+
+    <nav class="tab-nav">
+        <button class="tab-btn active" data-type="daily">✔ 기본 (1점)</button>
+        <button class="tab-btn" data-type="challenge">🔥 도전 (10점+)</button>
+        <button class="tab-btn" data-type="bonus">🌟 보너스</button>
+    </nav>
+
+    <main class="content-area">
+        <div id="mission-list" class="mission-list">
+            <!-- Missions injected via JS -->
+        </div>
+    </main>
+
+    <!-- Success Modal -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+        <div class="modal">
+            <h3 class="modal-title">미션 완료?</h3>
+            <p class="modal-text" id="modal-text"></p>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" id="modal-cancel">아직</button>
+                <button class="modal-btn confirm" id="modal-confirm">완료했어요!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast hidden">
+        <div class="toast-content" id="toast-message"></div>
+    </div>
+
+    <script type="module" src="mission.js"></script>
+</body>
+
+</html>

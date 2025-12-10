@@ -94,6 +94,10 @@ loginForm.addEventListener('submit', (e) => {
 });
 
 function enterShop() {
+    // Save to LocalStorage for other pages
+    localStorage.setItem('userTeam', userTeam);
+    localStorage.setItem('userZone', userZone);
+
     // UI Transition
     introScreen.style.display = 'none';
     appContainer.classList.remove('hidden');
