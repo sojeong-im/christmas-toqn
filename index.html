@@ -4,24 +4,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>크리스마스 머지 게임 🎄</title>
+    <title>🎄 크리스마스 미션 & 트리 완성</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="index.css">
-    <link rel="stylesheet" href="game.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Noto+Sans+KR:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="snow.css">
 </head>
 
 <body>
+    <!-- Snow Effect Container -->
+    <div class="snow-container" aria-hidden="true">
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+    </div>
+
     <!-- Intro / Login Screen -->
-    <section id="intro-screen" class="intro-screen">
-        <div class="intro-card">
-            <h1 class="intro-title">🎅 크리스마스 머지 게임</h1>
-            <p class="intro-desc">같은 장식을 합쳐서 트리를 완성하세요!</p>
+    <section id="intro-screen" class="screen active">
+        <div class="glass-card intro-card">
+            <h1>🎄 Mission & Tree 🎄</h1>
+            <p>미션을 완수하고 트리를 완성하세요!</p>
 
             <form id="login-form">
                 <div class="form-group">
-                    <label for="team-select">소속 팀</label>
+                    <label>소속 팀</label>
                     <select id="team-select" required>
                         <option value="" disabled selected>팀 선택</option>
                         <option value="1">1팀</option>
@@ -30,75 +78,77 @@
                         <option value="4">4팀</option>
                     </select>
                 </div>
-                <!-- Zone selection removed for simplicity in Game Version as requested -->
+                <div class="form-group">
+                    <label>구역 (Zone)</label>
+                    <select id="zone-select" required disabled>
+                        <option value="" disabled selected>팀을 먼저 선택하세요</option>
+                    </select>
+                </div>
 
-                <button type="submit" class="start-btn">게임 시작하기 🎮</button>
+                <button type="submit" class="cta-btn pulse">입장하기 🎅</button>
             </form>
         </div>
     </section>
 
-    <!-- Game Application -->
+    <!-- Main App -->
     <div id="app-container" class="app-container hidden">
         <!-- Header -->
-        <header class="game-header">
-            <div class="header-top">
-                <span class="team-badge" id="team-name">1팀</span>
-                <div class="coin-box">
-                    <span>🪙</span>
-                    <span id="coin-amount">0</span>
-                </div>
+        <header class="main-header">
+            <div class="team-badge-group">
+                <span class="badge team" id="header-team">1팀</span>
+                <span class="badge zone" id="header-zone">1구역</span>
             </div>
-            <div class="score-board">
-                <div class="score-item">
-                    <span class="label">최고 단계</span>
-                    <span class="value" id="max-tier">🍭 1단계</span>
-                </div>
+            <div class="score-display">
+                <span class="label">Team Score</span>
+                <span class="value" id="team-score">0</span>
             </div>
         </header>
 
-        <!-- Game Board -->
-        <main class="game-area">
-            <div class="grid-container" id="game-grid">
-                <!-- 16 slots (4x4) -->
-                <!-- Slots generated via JS -->
+        <!-- Tab 1: Mission List -->
+        <main id="tab-mission" class="tab-content active">
+            <div class="content-header">
+                <h2>📜 오늘의 미션</h2>
+                <p>체크하고 점수를 모으세요!</p>
+            </div>
+
+            <div id="mission-list" class="mission-list">
+                <!-- Data injected by JS -->
             </div>
         </main>
 
-        <!-- Controls -->
-        <div class="game-controls">
-            <button id="spawn-btn" class="spawn-btn">
-                <span>🎁 선물 상자 열기</span>
-                <span class="cost">무료</span>
-            </button>
-        </div>
+        <!-- Tab 2: Merge Game -->
+        <main id="tab-game" class="tab-content hidden">
+            <div class="game-area">
+                <div class="game-info">
+                    <p>50점을 사용하여<br>선물을 소환하세요!</p>
+                </div>
+                <div class="grid-container" id="game-grid">
+                    <!-- 4x4 Grid -->
+                </div>
+                <button id="spawn-btn" class="spawn-btn" disabled>
+                    <span class="icon">🎁</span>
+                    <span class="text">선물 열기 (-50점)</span>
+                </button>
+            </div>
+        </main>
 
-        <!-- Footer Navigation -->
-        <footer class="app-footer">
-            <button class="footer-btn active">
-                <span>🎮</span> 게임
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-btn active" data-target="tab-mission">
+                <span class="icon">✅</span>
+                <span>미션</span>
             </button>
-            <button class="footer-btn" id="go-mission-btn">
-                <span>📜</span> 미션
+            <button class="nav-btn" data-target="tab-game">
+                <span class="icon">🎄</span>
+                <span>트리 완성</span>
             </button>
-        </footer>
+        </nav>
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="toast hidden">
-        <div class="toast-content" id="toast-message"></div>
-    </div>
+    <div id="toast" class="toast hidden"></div>
 
-    <!-- Level Up Modal -->
-    <div id="levelup-modal" class="modal-overlay hidden">
-        <div class="modal">
-            <div class="modal-emoji">🎉</div>
-            <h3 class="modal-title">NEW 아이템 발견!</h3>
-            <p class="modal-text" id="levelup-text">와! <strong>눈사람</strong>을 만드셨네요!</p>
-            <button class="modal-btn confirm" id="levelup-confirm">확인</button>
-        </div>
-    </div>
-
-    <script type="module" src="game.js"></script>
+    <script type="module" src="app.js"></script>
 </body>
 
 </html>
