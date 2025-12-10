@@ -1,7 +1,10 @@
-// Initial State
+import { db, doc, getDoc, setDoc, updateDoc, onSnapshot, increment } from './firebase-config.js';
+
+// Initial State (Will be overwritten by Firebase)
 let currentCoins = 1250;
 let currentTab = 'basic';
 const teamName = "1팀";
+const TEAM_ID = "team_01"; // ID for database
 
 // Mock Data for Items
 const inventory = {}; // { itemId: count }
@@ -9,7 +12,7 @@ const inventory = {}; // { itemId: count }
 const items = [
     // Basic Items (5-10 coins)
     { id: 'b1', name: '작은 사랑 볼', price: 5, tier: 'basic', image: 'assets/images/small_love_ball.png' },
-    { id: 'b2', name: '미니 지팡이', price: 7, tier: 'basic', image: 'assets/images/small_love_ball.png' }, // reusing placeholder
+    { id: 'b2', name: '미니 지팡이', price: 7, tier: 'basic', image: 'assets/images/small_love_ball.png' },
     { id: 'b3', name: '반짝 리본', price: 10, tier: 'basic', image: 'assets/images/small_love_ball.png' },
 
     // Core Items (15-25 coins)
@@ -42,10 +45,41 @@ const modalCancelBtn = document.getElementById('modal-cancel');
 let pendingPurchaseId = null;
 
 // Initialize
-function init() {
-    updateCoinDisplay();
+async function init() {
     renderItems('basic');
-    checkSecretUnlock();
+
+    // Firebase Realtime Listener
+    try {
+        const teamRef = doc(db, "teams", TEAM_ID);
+
+        // Listen for changes
+        onSnapshot(teamRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                currentCoins = data.coins || 0;
+                // Merge remote inventory with local logic if needed, or just use remote
+                // For simplicity, let's just use the count from DB if we stored it properly.
+                // But structure might be: { coins: 1000, inventory: { b1: 2, c1: 1 } }
+                if (data.inventory) {
+                    Object.assign(inventory, data.inventory);
+                }
+                updateCoinDisplay();
+                renderItems(currentTab);
+                if (currentTab === 'secret') renderSecretItems(); // Refresh current view
+                checkSecretUnlock();
+            } else {
+                // Initialize if not exists
+                setDoc(teamRef, {
+                    coins: 1250,
+                    inventory: {}
+                });
+            }
+        });
+    } catch (e) {
+        console.warn("Firebase config not set or invalid. Using local mode.", e);
+        // Fallback or "Local Mode" indicator
+        updateCoinDisplay();
+    }
 }
 
 // Core Logic
@@ -68,11 +102,6 @@ function updateButtonStates() {
 }
 
 function checkSecretUnlock() {
-    // Secret unlock condition: let's pretend it unlocks if you have bought 3 items total for demo
-    // Or simpler: if current coins < 1000 (meaning spent 250+) 
-    // Spec says: "Accumulate 1000 coins" (earned) or similar. Let's just allow it for demo if you buy a highlight item.
-    // For this demo, let's just leave it hidden until a condition is met.
-    // I'll make it visible if inventory count total > 2.
     const totalItems = Object.values(inventory).reduce((a, b) => a + b, 0);
     if (totalItems >= 2 && secretSection.classList.contains('hidden')) {
         secretSection.classList.remove('hidden');
@@ -101,7 +130,6 @@ function renderItems(tier) {
             </button>
         `;
 
-        // Attach event manually to avoid inline JS issues if any
         card.querySelector('.buy-btn').addEventListener('click', (e) => {
             initiateBuy(e.target.dataset.id);
         });
@@ -153,6 +181,7 @@ function initiateBuy(id) {
     const item = items.find(i => i.id === id);
     if (!item) return;
 
+    // Check local coins first for instant feedback (optional, but safer to check DB)
     if (currentCoins < item.price) {
         showToast("코인이 부족합니다! 😅");
         return;
@@ -168,34 +197,29 @@ modalCancelBtn.addEventListener('click', () => {
     pendingPurchaseId = null;
 });
 
-modalConfirmBtn.addEventListener('click', () => {
+modalConfirmBtn.addEventListener('click', async () => {
     if (pendingPurchaseId) {
         const item = items.find(i => i.id === pendingPurchaseId);
-        if (item && currentCoins >= item.price) {
-            // Deduct
-            currentCoins -= item.price;
+        if (item) {
 
-            // Add to Inventory
-            inventory[item.id] = (inventory[item.id] || 0) + 1;
+            // Firebase Update
+            try {
+                const teamRef = doc(db, "teams", TEAM_ID);
+                await updateDoc(teamRef, {
+                    coins: increment(-item.price),
+                    [`inventory.${item.id}`]: increment(1)
+                });
 
-            // UI Update
-            updateCoinDisplay();
+                // Success UI
+                showToast(`${item.name} 구매 완료! 우리 팀의 트리를 꾸며주세요. 🎉`);
 
-            // Re-render current view to update counts and button states
-            if (item.tier === 'secret') {
-                renderSecretItems();
-            } else {
-                renderItems(currentTab);
+            } catch (e) {
+                console.error("Purchase failed", e);
+                showToast("구매 실패! 인터넷 연결이나 설정을 확인하세요.");
             }
 
-            // Close Modal
             modalOverlay.classList.add('hidden');
-
-            // Success Message
-            showToast(`${item.name} 구매 완료! 우리 팀의 트리를 꾸며주세요. 🎉`);
-
-            // Check Secret
-            checkSecretUnlock();
+            pendingPurchaseId = null;
         }
     }
 });
@@ -204,18 +228,12 @@ modalConfirmBtn.addEventListener('click', () => {
 function showToast(msg) {
     toastMessage.innerText = msg;
     toast.classList.remove('hidden');
-
-    // Reset animation hack
     toast.style.animation = 'none';
-    toast.offsetHeight; /* trigger reflow */
+    toast.offsetHeight;
     toast.style.animation = 'fadeInOut 3s forwards';
-
-    setTimeout(() => {
-        // toast.classList.add('hidden'); // Animation handles opacity, but better to hide properly
-    }, 3000);
 }
 
-// Global Event Listeners for footer (just simple alerts or logs for now)
+// Footer Events
 document.querySelector('.btn-tree').addEventListener('click', () => {
     showToast("🎄 트리 꾸미기 화면으로 이동합니다 (데모)");
 });
