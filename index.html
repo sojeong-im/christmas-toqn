@@ -12,53 +12,95 @@
 </head>
 
 <body>
-    <!-- A. Header (Fixed) -->
-    <header class="app-header">
-        <div class="team-info">
-            <span class="team-badge" id="team-name">1팀</span>
-            <span class="team-label">의 현재 코인</span>
-        </div>
-        <div class="currency-display">
-            <span class="coin-icon">🪙</span>
-            <span class="coin-amount" id="coin-amount">1,250</span>
-            <span class="currency-name">새코인</span>
-        </div>
-    </header>
+    <!-- Intro / Login Screen -->
+    <section id="intro-screen" class="intro-screen">
+        <div class="intro-card">
+            <h1 class="intro-title">🎄 트리 대전 입장 🎄</h1>
+            <p class="intro-desc">팀과 구역을 선택하고 작전을 시작하세요!</p>
 
-    <!-- B. Tab Navigation -->
-    <nav class="tab-nav">
-        <button class="tab-btn active" data-tier="basic">🎁 기본 장식</button>
-        <button class="tab-btn" data-tier="core">💡 핵심 장식</button>
-        <button class="tab-btn" data-tier="highlight">🌟 하이라이트</button>
-    </nav>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="team-select">팀 선택</label>
+                    <select id="team-select" required>
+                        <option value="" disabled selected>팀을 선택하세요</option>
+                        <option value="1">1팀 (새부기)</option>
+                        <option value="2">2팀</option>
+                        <option value="3">3팀</option>
+                        <option value="4">4팀</option>
+                    </select>
+                </div>
 
-    <!-- C. Item List (Scrollable) -->
-    <main class="content-area">
-        <div class="item-grid" id="item-grid">
-            <!-- Items will be injected here via JS -->
+                <div class="form-group">
+                    <label for="zone-select">구역 선택</label>
+                    <select id="zone-select" required disabled>
+                        <option value="" disabled selected>먼저 팀을 선택하세요</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="mission-select">미션 종류</label>
+                    <select id="mission-select" required>
+                        <option value="decorate">🎄 트리 꾸미기</option>
+                        <option value="quiz">🧠 OX 퀴즈</option>
+                        <option value="photo">📸 인증샷 미션</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="start-btn">입장하기</button>
+            </form>
         </div>
+    </section>
 
-        <!-- Secret Section Placeholder -->
-        <div id="secret-section" class="secret-section hidden">
-            <h3 class="secret-title">🤫 새부기의 비밀 창고</h3>
-            <div class="item-grid" id="secret-grid">
-                <!-- Secret Items -->
+    <!-- Main Shop Application (Initially Hidden) -->
+    <div id="app-container" class="app-container hidden">
+        <!-- A. Header (Fixed) -->
+        <header class="app-header">
+            <div class="team-info">
+                <span class="team-badge" id="team-name">1팀</span>
+                <span class="team-label" id="zone-info">1구역</span>
             </div>
-        </div>
+            <div class="currency-display">
+                <span class="coin-icon">🪙</span>
+                <span class="coin-amount" id="coin-amount">0</span>
+                <span class="currency-name">새코인</span>
+            </div>
+        </header>
 
-        <!-- Spacer for footer -->
-        <div class="footer-spacer"></div>
-    </main>
+        <!-- B. Tab Navigation -->
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tier="basic">🎁 기본 장식</button>
+            <button class="tab-btn" data-tier="core">💡 핵심 장식</button>
+            <button class="tab-btn" data-tier="highlight">🌟 하이라이트</button>
+        </nav>
 
-    <!-- D. Footer (Fixed) -->
-    <footer class="app-footer">
-        <button class="footer-btn btn-tree">
-            <span>🎄</span> 트리 꾸미기
-        </button>
-        <button class="footer-btn btn-mission">
-            <span>🎯</span> 미션 하러 가기
-        </button>
-    </footer>
+        <!-- C. Item List (Scrollable) -->
+        <main class="content-area">
+            <div class="item-grid" id="item-grid">
+                <!-- Items will be injected here via JS -->
+            </div>
+
+            <!-- Secret Section Placeholder -->
+            <div id="secret-section" class="secret-section hidden">
+                <h3 class="secret-title">🤫 새부기의 비밀 창고</h3>
+                <div class="item-grid" id="secret-grid">
+                    <!-- Secret Items -->
+                </div>
+            </div>
+
+            <!-- Spacer for footer -->
+            <div class="footer-spacer"></div>
+        </main>
+
+        <!-- D. Footer (Fixed) -->
+        <footer class="app-footer">
+            <button class="footer-btn btn-tree">
+                <span>🎄</span> 트리 꾸미기
+            </button>
+            <button class="footer-btn btn-mission">
+                <span>🎯</span> 미션 목록
+            </button>
+        </footer>
+    </div>
 
     <!-- Toast Notification -->
     <div id="toast" class="toast hidden">

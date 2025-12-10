@@ -1,14 +1,14 @@
 import { db, doc, getDoc, setDoc, updateDoc, onSnapshot, increment } from './firebase-config.js';
 
-// Initial State (Will be overwritten by Firebase)
-let currentCoins = 1250;
+// Global State
+let userTeam = null; // '1', '2', '3', '4'
+let userZone = null;
+let userMission = null;
+let currentCoins = 0;
 let currentTab = 'basic';
-const teamName = "1팀";
-const TEAM_ID = "team_01"; // ID for database
-
-// Mock Data for Items
 const inventory = {}; // { itemId: count }
 
+// Mock Items Data
 const items = [
     // Basic Items (5-10 coins)
     { id: 'b1', name: '작은 사랑 볼', price: 5, tier: 'basic', image: 'assets/images/small_love_ball.png' },
@@ -29,6 +29,15 @@ const items = [
 ];
 
 // DOM Elements
+const introScreen = document.getElementById('intro-screen');
+const appContainer = document.getElementById('app-container');
+const loginForm = document.getElementById('login-form');
+const teamSelect = document.getElementById('team-select');
+const zoneSelect = document.getElementById('zone-select');
+const missionSelect = document.getElementById('mission-select');
+
+const headerTeamName = document.getElementById('team-name');
+const headerZoneInfo = document.getElementById('zone-info');
 const coinDisplay = document.getElementById('coin-amount');
 const itemGrid = document.getElementById('item-grid');
 const secretGrid = document.getElementById('secret-grid');
@@ -44,45 +53,102 @@ const modalCancelBtn = document.getElementById('modal-cancel');
 
 let pendingPurchaseId = null;
 
-// Initialize
-async function init() {
-    renderItems('basic');
+// === Intro Logic: Team & Zone Handling ===
+teamSelect.addEventListener('change', () => {
+    const team = teamSelect.value;
+    updateZoneOptions(team);
+});
 
-    // Firebase Realtime Listener
+function updateZoneOptions(team) {
+    zoneSelect.innerHTML = '<option value="" disabled selected>구역 선택</option>';
+    zoneSelect.disabled = false;
+
+    let maxZones = 5;
+    if (team === '1') {
+        maxZones = 6;
+    }
+
+    for (let i = 1; i <= maxZones; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = `${i}구역`;
+        zoneSelect.appendChild(option);
+    }
+}
+
+// === Login / Enter Shop Logic ===
+loginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    userTeam = teamSelect.value;
+    userZone = zoneSelect.value;
+    userMission = missionSelect.value;
+
+    if (!userTeam || !userZone || !userMission) {
+        alert("모든 항목을 선택해주세요!");
+        return;
+    }
+
+    // Save Context & Transition
+    enterShop();
+});
+
+function enterShop() {
+    // UI Transition
+    introScreen.style.display = 'none';
+    appContainer.classList.remove('hidden');
+
+    // Update Header
+    headerTeamName.innerText = `${userTeam}팀`;
+    headerZoneInfo.innerText = `${userZone}구역`;
+
+    // Connect to Firebase for this specific team
+    connectToFirebase(userTeam);
+}
+
+// === Connection Logic ===
+async function connectToFirebase(teamId) {
+    const teamDocId = `team_${teamId.padStart(2, '0')}`; // e.g., team_01
+
     try {
-        const teamRef = doc(db, "teams", TEAM_ID);
+        const teamRef = doc(db, "teams", teamDocId);
 
         // Listen for changes
         onSnapshot(teamRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 currentCoins = data.coins || 0;
-                // Merge remote inventory with local logic if needed, or just use remote
-                // For simplicity, let's just use the count from DB if we stored it properly.
-                // But structure might be: { coins: 1000, inventory: { b1: 2, c1: 1 } }
+
+                // Sync Inventory
                 if (data.inventory) {
                     Object.assign(inventory, data.inventory);
                 }
-                updateCoinDisplay();
-                renderItems(currentTab);
-                if (currentTab === 'secret') renderSecretItems(); // Refresh current view
-                checkSecretUnlock();
+
+                updateAppUI();
             } else {
-                // Initialize if not exists
+                // Create if not exists (First login for this team)
                 setDoc(teamRef, {
-                    coins: 1250,
+                    coins: 1000, // Initial Bonus
                     inventory: {}
                 });
             }
         });
     } catch (e) {
-        console.warn("Firebase config not set or invalid. Using local mode.", e);
-        // Fallback or "Local Mode" indicator
-        updateCoinDisplay();
+        console.warn("Firebase Error (Local Mode):", e);
+        // Fallback for local testing wo/ Firebase
+        currentCoins = 1250;
+        updateAppUI();
     }
 }
 
-// Core Logic
+function updateAppUI() {
+    updateCoinDisplay();
+    renderItems(currentTab);
+    if (currentTab === 'secret') renderSecretItems();
+    checkSecretUnlock();
+}
+
+// === Core Shop Logic ===
 function updateCoinDisplay() {
     coinDisplay.innerText = currentCoins.toLocaleString();
     updateButtonStates();
@@ -103,6 +169,7 @@ function updateButtonStates() {
 
 function checkSecretUnlock() {
     const totalItems = Object.values(inventory).reduce((a, b) => a + b, 0);
+    // Demo condition: 2 or more items bought
     if (totalItems >= 2 && secretSection.classList.contains('hidden')) {
         secretSection.classList.remove('hidden');
         renderSecretItems();
@@ -181,7 +248,6 @@ function initiateBuy(id) {
     const item = items.find(i => i.id === id);
     if (!item) return;
 
-    // Check local coins first for instant feedback (optional, but safer to check DB)
     if (currentCoins < item.price) {
         showToast("코인이 부족합니다! 😅");
         return;
@@ -204,18 +270,27 @@ modalConfirmBtn.addEventListener('click', async () => {
 
             // Firebase Update
             try {
-                const teamRef = doc(db, "teams", TEAM_ID);
+                const teamDocId = `team_${userTeam.padStart(2, '0')}`;
+                const teamRef = doc(db, "teams", teamDocId);
+
                 await updateDoc(teamRef, {
                     coins: increment(-item.price),
                     [`inventory.${item.id}`]: increment(1)
                 });
 
-                // Success UI
                 showToast(`${item.name} 구매 완료! 우리 팀의 트리를 꾸며주세요. 🎉`);
 
             } catch (e) {
                 console.error("Purchase failed", e);
-                showToast("구매 실패! 인터넷 연결이나 설정을 확인하세요.");
+                // Fallback for local
+                if (!db._databaseId) { // simple check if db is basically empty/mocked
+                    currentCoins -= item.price;
+                    inventory[item.id] = (inventory[item.id] || 0) + 1;
+                    updateAppUI();
+                    showToast(`${item.name} 구매 완료! (로컬 모드)`);
+                } else {
+                    showToast("구매 실패! 인터넷 연결이나 설정을 확인하세요.");
+                }
             }
 
             modalOverlay.classList.add('hidden');
@@ -242,5 +317,5 @@ document.querySelector('.btn-mission').addEventListener('click', () => {
     showToast("🎯 미션 목록으로 이동합니다 (데모)");
 });
 
-// Run
-init();
+// Init is handled by Login now, but we can set default render for background
+renderItems('basic');
