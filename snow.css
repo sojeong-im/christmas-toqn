@@ -17,8 +17,10 @@
     height: 10px;
     background: white;
     border-radius: 50%;
-    opacity: 0.8;
+    opacity: 0.9;
     filter: blur(1px);
+    box-shadow: 0 0 5px white, 0 0 10px rgba(255, 255, 255, 0.5);
+    /* Glowing Snow */
     animation: snowfall linear infinite;
 }
 
