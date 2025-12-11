@@ -371,13 +371,17 @@ select:focus {
 }
 
 .p-100 {
-    background: linear-gradient(135deg, #BBDEFB, #64B5F6);
+    background-color: transparent;
+    background-image: url('assets/images/star_cookie.png');
+    background-size: 90%;
+    background-repeat: no-repeat;
+    background-position: center;
+    box-shadow: none;
 }
 
 /* Blue */
 .p-100::after {
-    content: '❄️';
-    font-size: 24px;
+    content: '';
 }
 
 .p-200 {
