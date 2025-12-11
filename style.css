@@ -399,14 +399,17 @@ select:focus {
 }
 
 .p-400 {
-    background: linear-gradient(135deg, #FFF9C4, #FFF176);
-    color: #555;
+    background-color: transparent;
+    background-image: url('assets/images/gingerbread.png');
+    background-size: 90%;
+    background-repeat: no-repeat;
+    background-position: center;
+    box-shadow: none;
 }
 
-/* Yellow */
+/* Yellow / Gingerbread */
 .p-400::after {
-    content: '🦌';
-    font-size: 26px;
+    content: '';
 }
 
 .p-800 {
