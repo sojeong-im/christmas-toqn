@@ -357,13 +357,17 @@ select:focus {
 
 /* Piece Colors (Scores) */
 .p-50 {
-    background: linear-gradient(135deg, #FFCDD2, #E57373);
+    background-color: transparent;
+    background-image: url('assets/images/cookie.png');
+    background-size: 80%;
+    /* Adjust size to fit nicely */
+    background-repeat: no-repeat;
+    background-position: center;
+    box-shadow: none;
 }
 
-/* Red Light */
 .p-50::after {
-    content: '🍭';
-    font-size: 22px;
+    content: '';
 }
 
 .p-100 {
