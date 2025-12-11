@@ -385,13 +385,17 @@ select:focus {
 }
 
 .p-200 {
-    background: linear-gradient(135deg, #C8E6C9, #81C784);
+    background-color: transparent;
+    background-image: url('assets/images/heart_cookie.png');
+    background-size: 90%;
+    background-repeat: no-repeat;
+    background-position: center;
+    box-shadow: none;
 }
 
 /* Green */
 .p-200::after {
-    content: '🎁';
-    font-size: 24px;
+    content: '';
 }
 
 .p-400 {
