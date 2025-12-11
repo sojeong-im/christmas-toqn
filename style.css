@@ -413,14 +413,18 @@ select:focus {
 }
 
 .p-800 {
-    background: linear-gradient(135deg, #E1BEE7, #BA68C8);
+    background-color: transparent;
+    background-image: url('assets/images/tree_cookie.png');
+    background-size: 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    box-shadow: none;
     animation: glow 2s infinite;
 }
 
-/* Purple */
+/* Purple / Tree */
 .p-800::after {
-    content: '🎄';
-    font-size: 30px;
+    content: '';
 }
 
 @keyframes glow {
