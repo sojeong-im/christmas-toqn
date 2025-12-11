@@ -170,10 +170,10 @@ function updateScoreUI() {
     // Enable/Disable Game Button
     if (currentCoins >= 50) {
         spawnBtn.disabled = false;
-        spawnBtn.innerHTML = `<span class="icon">🎁</span><span class="text">선물 열기 (-50점)</span>`;
+        spawnBtn.innerHTML = `<span class="icon">🍪</span><span class="text">쿠키 굽기 (-50P)</span>`;
     } else {
         spawnBtn.disabled = true;
-        spawnBtn.innerHTML = `<span class="icon">🔒</span><span class="text">50점 필요</span>`;
+        spawnBtn.innerHTML = `<span class="icon">🔒</span><span class="text">50P 필요</span>`;
     }
 }
 
@@ -381,13 +381,16 @@ function mergeOrMove(from, to) {
     } else if (vTo === vFrom) {
         // Merge
         if (vTo >= 800) {
-            showToast("🎄 이미 완성된 트리입니다!");
+            showToast("🍪 이미 완성된 전설의 트리 쿠키입니다!");
             return;
         }
         const newVal = vFrom * 2;
         boardState[to] = newVal;
         boardState[from] = null;
-        showToast(`✨ 합체 성공!`);
+
+        let msg = "✨ 쿠키 업그레이드!";
+        if (newVal === 800) msg = "🎄 전설의 트리 쿠키 완성!!";
+        showToast(msg);
     } else {
         // Swap (Optional)
         boardState[to] = vFrom;

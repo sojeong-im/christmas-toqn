@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎄 크리스마스 미션 & 트리 완성</title>
+    <title>🍪 산타부기의 비밀 쿠키실</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -64,8 +64,8 @@
     <!-- Intro / Login Screen -->
     <section id="intro-screen" class="screen active">
         <div class="glass-card intro-card">
-            <h1>🎄 Mission & Tree 🎄</h1>
-            <p>미션을 완수하고 트리를 완성하세요!</p>
+            <h1>🍪 산타부기의<br>비밀 쿠키실</h1>
+            <p>미션으로 재료를 모아<br>특별한 쿠키를 구워보세요!</p>
 
             <form id="login-form">
                 <div class="form-group">
@@ -85,7 +85,7 @@
                     </select>
                 </div>
 
-                <button type="submit" class="cta-btn pulse">입장하기 🎅</button>
+                <button type="submit" class="cta-btn pulse">쿠키실 입장하기 🚪</button>
             </form>
         </div>
     </section>
@@ -99,7 +99,7 @@
                 <span class="badge zone" id="header-zone">1구역</span>
             </div>
             <div class="score-display">
-                <span class="label">Team Score</span>
+                <span class="label">Cookie Point</span>
                 <span class="value" id="team-score">0</span>
             </div>
         </header>
@@ -107,8 +107,8 @@
         <!-- Tab 1: Mission List -->
         <main id="tab-mission" class="tab-content active">
             <div class="content-header">
-                <h2>📜 오늘의 미션</h2>
-                <p>체크하고 점수를 모으세요!</p>
+                <h2>📜 재료 모으기 (미션)</h2>
+                <p>미션을 완료하고 쿠키 포인트를 모으세요!</p>
             </div>
 
             <div id="mission-list" class="mission-list">
@@ -120,14 +120,14 @@
         <main id="tab-game" class="tab-content hidden">
             <div class="game-area">
                 <div class="game-info">
-                    <p>50점을 사용하여<br>선물을 소환하세요!</p>
+                    <p>50포인트로<br>새로운 쿠키를 구울 수 있어요!</p>
                 </div>
                 <div class="grid-container" id="game-grid">
                     <!-- 4x4 Grid -->
                 </div>
                 <button id="spawn-btn" class="spawn-btn" disabled>
-                    <span class="icon">🎁</span>
-                    <span class="text">선물 열기 (-50점)</span>
+                    <span class="icon">🥣</span>
+                    <span class="text">쿠키 굽기 (-50P)</span>
                 </button>
             </div>
         </main>
@@ -139,8 +139,8 @@
                 <span>미션</span>
             </button>
             <button class="nav-btn" data-target="tab-game">
-                <span class="icon">🎄</span>
-                <span>트리 완성</span>
+                <span class="icon">🍪</span>
+                <span>비밀 쿠키실</span>
             </button>
         </nav>
     </div>
