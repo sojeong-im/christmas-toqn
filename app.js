@@ -342,13 +342,21 @@ function handleDrop(e) {
     }
 }
 
-// Touch Handling (Simplified for brevity, same logic)
+// Touch Handling (Optimized)
 let touchEl = null; let tX = 0, tY = 0;
 function handleTouchStart(e) { e.preventDefault(); touchEl = e.target; tX = e.touches[0].clientX; tY = e.touches[0].clientY; dragSrcIndex = parseInt(touchEl.parentElement.dataset.index); touchEl.classList.add('dragging'); }
-function handleTouchMove(e) { e.preventDefault(); if (!touchEl) return; const t = e.touches[0]; touchEl.style.transform = `translate(${t.clientX - tX}px, ${t.clientY - tY}px) scale(1.1)`; touchEl.style.zIndex = 1000; }
+function handleTouchMove(e) {
+    // Use requestAnimationFrame if possible, but for now use translate3d for GPU
+    e.preventDefault();
+    if (!touchEl) return;
+    const t = e.touches[0];
+    const dx = t.clientX - tX;
+    const dy = t.clientY - tY;
+    touchEl.style.transform = `translate3d(${dx}px, ${dy}px, 0) scale(1.15)`;
+}
 function handleTouchEnd(e) {
     if (!touchEl) return;
-    touchEl.classList.remove('dragging'); touchEl.style.transform = ''; touchEl.style.zIndex = '';
+    touchEl.classList.remove('dragging'); touchEl.style.transform = '';
     const t = e.changedTouches[0]; const target = document.elementFromPoint(t.clientX, t.clientY);
     const slot = target ? target.closest('.grid-slot') : null;
     if (slot) {
@@ -358,7 +366,7 @@ function handleTouchEnd(e) {
     touchEl = null; dragSrcIndex = -1;
 }
 
-// === Critical: Sync Move to DB ===
+// === Critical: Sync Move to DB (Optimistic) ===
 async function performMove(from, to) {
     const vFrom = boardState[from];
     const vTo = boardState[to];
@@ -368,6 +376,7 @@ async function performMove(from, to) {
     let newBoard = [...boardState];
     let newCollection = [...unlockedCollection];
     let msg = "";
+    let success = true;
 
     if (vTo === null) {
         // Move
@@ -395,18 +404,24 @@ async function performMove(from, to) {
         newBoard[from] = vTo;
     }
 
-    // Server Update
-    const docId = `team_${userTeam.padStart(2, '0')}`;
-    await updateDoc(doc(db, "teams", docId), {
-        board: newBoard,
-        collection: newCollection
-    });
-
-    // Optimistic local update (will be overwritten by snapshot soon)
+    // 1. Optimistic Local Update (Instant Feedback)
     boardState = newBoard;
     unlockedCollection = newCollection;
     renderGrid();
     updateCollectionUI();
+
+    // 2. Server Update (Background)
+    const docId = `team_${userTeam.padStart(2, '0')}`;
+    try {
+        await updateDoc(doc(db, "teams", docId), {
+            board: newBoard,
+            collection: newCollection
+        });
+    } catch (err) {
+        console.error("Sync failed:", err);
+        // Rollback could go here if strict, but for game feel we stick to optimistic
+        // onSnapshot will eventually correct it
+    }
 }
 
 // === Tab Nav ===

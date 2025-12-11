@@ -548,13 +548,22 @@ select:focus {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: 0.2s;
+    transition: transform 0.2s;
+    /* Smooth return */
+    filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.3));
+    will-change: transform;
+    /* Hint for GPU acceleration */
 }
 
 .game-piece.dragging {
-    transform: scale(1.2);
-    opacity: 0.8;
+    transition: none;
+    /* INSTANT RESPONSE - FIX LAG */
+    transform: scale(1.15);
+    opacity: 0.9;
     z-index: 100;
+    cursor: grabbing;
+    filter: none;
+    /* Disable shadow during drag for FPS */
 }
 
 /* Re-apply images to pieces */
