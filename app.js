@@ -421,8 +421,16 @@ tabBtns.forEach(btn => {
 
 // Toast
 const toast = document.getElementById('toast');
+let toastTimer = null;
+
 function showToast(m) {
+    if (toastTimer) clearTimeout(toastTimer); // Clear existing timer
+
     toast.innerText = m;
     toast.classList.remove('hidden');
-    setTimeout(() => toast.classList.add('hidden'), 2000);
+
+    toastTimer = setTimeout(() => {
+        toast.classList.add('hidden');
+        toastTimer = null;
+    }, 2000);
 }
