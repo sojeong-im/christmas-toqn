@@ -1,12 +1,35 @@
-import { db, doc, getDoc, setDoc, updateDoc, onSnapshot, increment } from './firebase-config.js';
+import { db, doc, setDoc, updateDoc, onSnapshot, increment } from './firebase-config.js';
 
 // === Global State ===
 let userTeam = null;
 let userZone = null;
 let currentCoins = 0;
-let userMissionStatus = {}; // { missionId: boolean } - Local check status
+let userMissionStatus = {};
 const BOARD_SIZE = 4;
 let boardState = Array(16).fill(null);
+let unlockedCollection = []; // [50, 100, 200, ...]
+
+// === DOM Elements ===
+const introScreen = document.getElementById('intro-screen');
+const appContainer = document.getElementById('app-container');
+const loginForm = document.getElementById('login-form');
+const teamSelect = document.getElementById('team-select');
+const zoneSelect = document.getElementById('zone-select');
+
+// Header
+const headerTeam = document.getElementById('header-team');
+const headerZone = document.getElementById('header-zone');
+const teamScoreEl = document.getElementById('team-score');
+
+// Tabs
+const tabBtns = document.querySelectorAll('.nav-btn');
+const tabContents = document.querySelectorAll('.tab-content');
+const missionListEl = document.getElementById('mission-list');
+
+// Game & Collection
+const spawnBtn = document.getElementById('spawn-btn');
+const gameGrid = document.getElementById('game-grid');
+const collectionBar = document.getElementById('collection-bar');
 
 // === Mission Data ===
 const missionCategories = [
@@ -57,27 +80,6 @@ const missionCategories = [
     }
 ];
 
-// === DOM Elements ===
-const introScreen = document.getElementById('intro-screen');
-const appContainer = document.getElementById('app-container');
-const loginForm = document.getElementById('login-form');
-const teamSelect = document.getElementById('team-select');
-const zoneSelect = document.getElementById('zone-select');
-
-// Header
-const headerTeam = document.getElementById('header-team');
-const headerZone = document.getElementById('header-zone');
-const teamScoreEl = document.getElementById('team-score');
-
-// Tabs
-const tabBtns = document.querySelectorAll('.nav-btn');
-const tabContents = document.querySelectorAll('.tab-content');
-const missionListEl = document.getElementById('mission-list');
-
-// Game
-const spawnBtn = document.getElementById('spawn-btn');
-const gameGrid = document.getElementById('game-grid');
-
 // === 1. Init & Login ===
 teamSelect.addEventListener('change', () => {
     const team = teamSelect.value;
@@ -117,10 +119,9 @@ function enterApp() {
 
     renderMissionList();
     connectToFirebase(userTeam);
-    initGameBoard(); // Initialize grid (empty)
 }
 
-// === 2. Firebase Connection ===
+// === 2. Firebase Connection (REALTIME SYNC) ===
 function connectToFirebase(teamId) {
     const docId = `team_${teamId.padStart(2, '0')}`;
     const docRef = doc(db, "teams", docId);
@@ -128,66 +129,90 @@ function connectToFirebase(teamId) {
     onSnapshot(docRef, (snap) => {
         if (snap.exists()) {
             const data = snap.data();
+
+            // 1. Coins
             currentCoins = data.coins || 0;
             updateScoreUI();
 
-            // Sync Mission Status (if global, but usually missions are local per user session)
-            // But let's load 'completedMissions' if we want shared state.
-            // For now, we keep missions local check, but score global.
+            // 2. Missions
             if (data.missions) {
                 userMissionStatus = data.missions;
                 updateMissionUI();
             }
+
+            // 3. Game Board (Synced!)
+            if (data.board) {
+                boardState = data.board;
+            } else {
+                boardState = Array(16).fill(null); // Init if empty
+            }
+            renderGrid();
+
+            // 4. Collection (Shared!)
+            if (data.collection) {
+                unlockedCollection = data.collection;
+            } else {
+                unlockedCollection = [];
+            }
+            updateCollectionUI();
+
         } else {
-            setDoc(docRef, { coins: 0, missions: {} });
+            // Initialize Team Doc
+            setDoc(docRef, {
+                coins: 0,
+                missions: {},
+                board: Array(16).fill(null),
+                collection: []
+            });
         }
     });
 }
 
-function updateScore(amount, missionId = null) {
-    // Optimistic
-    currentCoins += amount;
-    updateScoreUI();
-
-    const docId = `team_${userTeam.padStart(2, '0')}`;
-    const docRef = doc(db, "teams", docId);
-
-    const updates = {
-        coins: increment(amount)
-    };
-
-    if (missionId) {
-        // Mark mission as done
-        updates[`missions.${missionId}`] = true;
-    }
-
-    updateDoc(docRef, updates).catch(console.error);
-}
-
+// === UI Updates ===
 function updateScoreUI() {
     teamScoreEl.innerText = currentCoins.toLocaleString();
 
-    // Enable/Disable Game Button
     if (currentCoins >= 50) {
         spawnBtn.disabled = false;
-        spawnBtn.innerHTML = `<span class="icon">🍪</span><span class="text">쿠키 굽기 (-50P)</span>`;
+        spawnBtn.innerHTML = `<span class="icon">🥣</span><span class="text">쿠키 굽기 (-50P)</span>`;
     } else {
         spawnBtn.disabled = true;
         spawnBtn.innerHTML = `<span class="icon">🔒</span><span class="text">50P 필요</span>`;
     }
 }
 
-// === 3. Mission Tab Logic ===
+function updateMissionUI() {
+    Object.keys(userMissionStatus).forEach(mid => {
+        const badge = document.getElementById(`count-${mid}`);
+        if (badge) {
+            badge.innerText = `${userMissionStatus[mid]}회`;
+        }
+    });
+}
+
+function updateCollectionUI() {
+    const items = collectionBar.querySelectorAll('.col-item');
+    items.forEach(el => {
+        const val = parseInt(el.dataset.val);
+        if (unlockedCollection.includes(val)) {
+            if (el.classList.contains('locked')) { // New unlock
+                el.classList.remove('locked');
+                el.classList.add('unlocked');
+                el.innerText = "";
+            }
+        }
+    });
+}
+
+// === 3. Mission Actions ===
 function renderMissionList() {
     missionListEl.innerHTML = '';
-
     missionCategories.forEach(cat => {
         const section = document.createElement('div');
         section.innerHTML = `<div class="section-title">${cat.title}</div>`;
 
         cat.items.forEach(item => {
             const count = (userMissionStatus[item.id] || 0);
-
             const el = document.createElement('div');
             el.className = 'mission-item';
             el.innerHTML = `
@@ -200,101 +225,95 @@ function renderMissionList() {
                     <span class="mission-points">+${cat.points}점</span>
                 </div>
             `;
-
-            // Event
             const btn = el.querySelector('.mission-btn-repeat');
             btn.addEventListener('click', () => {
-                // Confirm dialog optional for repeated actions, but good for safety
-                // Or make it smoother without confirm if user wants speed? 
-                // Let's keep confirm to prevent accidental clicks
-                const confirmDone = confirm(`"${item.text}" 미션을 1회 완료하셨나요?`);
-                if (confirmDone) {
-                    // Update Score & Count
-                    updateScore(cat.points, item.id);
-                    // Optimistic update UI
-                    const badge = document.getElementById(`count-${item.id}`);
-                    const current = parseInt(badge.innerText);
-                    badge.innerText = `${current + 1}회`;
-                    badge.classList.add('updated-flash');
-                    setTimeout(() => badge.classList.remove('updated-flash'), 500);
-
-                    showToast(`✅ 인증 완료! +${cat.points}점`);
+                if (confirm(`"${item.text}" 미션을 1회 완료하셨나요?`)) {
+                    performMissionAction(cat.points, item.id);
+                    showToast(`✅ 재료 획득! +${cat.points}P`);
                 }
             });
-
             section.appendChild(el);
         });
-
         missionListEl.appendChild(section);
     });
 }
 
-function updateMissionUI() {
-    // Check boxes based on loaded data
-    Object.keys(userMissionStatus).forEach(mid => {
-        const badge = document.getElementById(`count-${mid}`);
-        if (badge) {
-            badge.innerText = `${userMissionStatus[mid]}회`;
-        }
-    });
+async function performMissionAction(points, missionId) {
+    const docId = `team_${userTeam.padStart(2, '0')}`;
+    const updates = {
+        coins: increment(points)
+    };
+    if (missionId) {
+        updates[`missions.${missionId}`] = increment(1);
+    }
+    await updateDoc(doc(db, "teams", docId), updates);
 }
 
-// === 4. Game Tab Logic (Merge) ===
-spawnBtn.addEventListener('click', () => {
+// === 4. Game Logic (Server-side focused) ===
+spawnBtn.addEventListener('click', async () => {
     if (currentCoins < 50) return;
 
-    // Check space
-    const emptyCount = boardState.filter(v => v === null).length;
-    if (emptyCount === 0) {
-        showToast("공간이 부족해요!");
+    // Find empty spot locally first to check
+    const empties = boardState.map((v, i) => v === null ? i : null).filter(v => v !== null);
+    if (empties.length === 0) {
+        showToast("오븐(격자판)이 꽉 찼어요!");
         return;
     }
 
-    updateScore(-50); // Deduct Cost
-    spawnPiece(50);
-});
+    // Pick random spot
+    const idx = empties[Math.floor(Math.random() * empties.length)];
 
-function initGameBoard() {
+    // Optimistic Update (Prevent lag feeling)
+    boardState[idx] = 50;
     renderGrid();
-}
+
+    // Sync to DB
+    const docId = `team_${userTeam.padStart(2, '0')}`;
+    const newBoard = [...boardState];
+    newBoard[idx] = 50; // Ensure logic consistency
+
+    // Add to collection if not present
+    let newCollection = [...unlockedCollection];
+    if (!newCollection.includes(50)) newCollection.push(50);
+
+    const updates = {
+        coins: increment(-50),
+        board: newBoard,
+        collection: newCollection
+    };
+
+    await updateDoc(doc(db, "teams", docId), updates);
+});
 
 function renderGrid() {
     gameGrid.innerHTML = '';
     boardState.forEach((val, idx) => {
         const slot = document.createElement('div');
         slot.className = 'grid-slot';
-        slot.dataset.index = idx;
+        slot.dataset.index = idx; // Important for drop
 
         if (val) {
             const piece = document.createElement('div');
             piece.className = `game-piece p-${val}`;
             piece.draggable = true;
-            // piece.innerText = val; // Optional: Show number
 
-            // Events
+            // Only unlock view if collected? Or always show?
+            // User request: "깨기 전에는 물음표로 안보이고" -> "격자판 위에 보였으면 좋겠어"
+            // Usually merge games show pieces even if not 'collected' widely.
+            // But let's assume if it exists on board, you can see it. 
+            // The collection bar handles the "Global Unlock" status.
+
             addDragEvents(piece);
-
             slot.appendChild(piece);
         }
 
-        // Drop
         slot.addEventListener('dragover', e => e.preventDefault());
         slot.addEventListener('drop', handleDrop);
-
         gameGrid.appendChild(slot);
     });
 }
 
-function spawnPiece(val) {
-    const empties = boardState.map((v, i) => v === null ? i : null).filter(v => v !== null);
-    if (empties.length === 0) return;
-
-    const idx = empties[Math.floor(Math.random() * empties.length)];
-    boardState[idx] = val;
-    renderGrid();
-}
-
-// Drag & Drop
+// --- Drag & Drop Sync Logic ---
 let dragSrcIndex = -1;
 
 function addDragEvents(el) {
@@ -306,8 +325,7 @@ function addDragEvents(el) {
         e.target.classList.remove('dragging');
         dragSrcIndex = -1;
     });
-
-    // Touch
+    // Touch support hooks
     el.addEventListener('touchstart', handleTouchStart, { passive: false });
     el.addEventListener('touchmove', handleTouchMove, { passive: false });
     el.addEventListener('touchend', handleTouchEnd);
@@ -317,94 +335,85 @@ function handleDrop(e) {
     e.preventDefault();
     const targetSlot = e.target.closest('.grid-slot');
     if (!targetSlot) return;
-
     const targetIdx = parseInt(targetSlot.dataset.index);
+
     if (dragSrcIndex !== -1 && dragSrcIndex !== targetIdx) {
-        mergeOrMove(dragSrcIndex, targetIdx);
+        performMove(dragSrcIndex, targetIdx);
     }
 }
 
-// --- Mobile Touch Logic (Simplified) ---
-let touchEl = null;
-let touchStartX = 0, touchStartY = 0;
-
-function handleTouchStart(e) {
-    e.preventDefault();
-    touchEl = e.target;
-    const t = e.touches[0];
-    touchStartX = t.clientX;
-    touchStartY = t.clientY;
-
-    dragSrcIndex = parseInt(touchEl.parentElement.dataset.index);
-    touchEl.classList.add('dragging');
-}
-
-function handleTouchMove(e) {
-    e.preventDefault();
-    if (!touchEl) return;
-    const t = e.touches[0];
-    const dx = t.clientX - touchStartX;
-    const dy = t.clientY - touchStartY;
-    touchEl.style.transform = `translate(${dx}px, ${dy}px) scale(1.1)`;
-    touchEl.style.zIndex = 1000;
-}
-
+// Touch Handling (Simplified for brevity, same logic)
+let touchEl = null; let tX = 0, tY = 0;
+function handleTouchStart(e) { e.preventDefault(); touchEl = e.target; tX = e.touches[0].clientX; tY = e.touches[0].clientY; dragSrcIndex = parseInt(touchEl.parentElement.dataset.index); touchEl.classList.add('dragging'); }
+function handleTouchMove(e) { e.preventDefault(); if (!touchEl) return; const t = e.touches[0]; touchEl.style.transform = `translate(${t.clientX - tX}px, ${t.clientY - tY}px) scale(1.1)`; touchEl.style.zIndex = 1000; }
 function handleTouchEnd(e) {
     if (!touchEl) return;
-    touchEl.classList.remove('dragging');
-    touchEl.style.transform = '';
-    touchEl.style.zIndex = '';
-
-    const t = e.changedTouches[0];
-    const targetEl = document.elementFromPoint(t.clientX, t.clientY);
-    const targetSlot = targetEl ? targetEl.closest('.grid-slot') : null;
-
-    if (targetSlot) {
-        const targetIdx = parseInt(targetSlot.dataset.index);
-        if (targetIdx !== dragSrcIndex) {
-            mergeOrMove(dragSrcIndex, targetIdx);
-        }
+    touchEl.classList.remove('dragging'); touchEl.style.transform = ''; touchEl.style.zIndex = '';
+    const t = e.changedTouches[0]; const target = document.elementFromPoint(t.clientX, t.clientY);
+    const slot = target ? target.closest('.grid-slot') : null;
+    if (slot) {
+        const idx = parseInt(slot.dataset.index);
+        if (idx !== dragSrcIndex) performMove(dragSrcIndex, idx);
     }
-
-    touchEl = null;
-    dragSrcIndex = -1;
+    touchEl = null; dragSrcIndex = -1;
 }
 
-function mergeOrMove(from, to) {
+// === Critical: Sync Move to DB ===
+async function performMove(from, to) {
     const vFrom = boardState[from];
     const vTo = boardState[to];
 
+    if (vFrom === null) return; // Ghost drag check
+
+    let newBoard = [...boardState];
+    let newCollection = [...unlockedCollection];
+    let msg = "";
+
     if (vTo === null) {
         // Move
-        boardState[to] = vFrom;
-        boardState[from] = null;
+        newBoard[to] = vFrom;
+        newBoard[from] = null;
     } else if (vTo === vFrom) {
         // Merge
         if (vTo >= 800) {
-            showToast("🍪 이미 완성된 전설의 트리 쿠키입니다!");
+            showToast("🎄 전설의 쿠키는 더 이상 합칠 수 없어요!");
             return;
         }
         const newVal = vFrom * 2;
-        boardState[to] = newVal;
-        boardState[from] = null;
+        newBoard[to] = newVal;
+        newBoard[from] = null;
 
-        let msg = "✨ 쿠키 업그레이드!";
-        if (newVal === 800) msg = "🎄 전설의 트리 쿠키 완성!!";
+        // Update Collection
+        if (!newCollection.includes(newVal)) newCollection.push(newVal);
+
+        msg = "✨ 따끈따끈! 쿠키가 구워졌어요!";
+        if (newVal === 800) msg = "🎄 전설의 트리가 완성되었습니다!!";
         showToast(msg);
     } else {
-        // Swap (Optional)
-        boardState[to] = vFrom;
-        boardState[from] = vTo;
+        // Swap
+        newBoard[to] = vFrom;
+        newBoard[from] = vTo;
     }
+
+    // Server Update
+    const docId = `team_${userTeam.padStart(2, '0')}`;
+    await updateDoc(doc(db, "teams", docId), {
+        board: newBoard,
+        collection: newCollection
+    });
+
+    // Optimistic local update (will be overwritten by snapshot soon)
+    boardState = newBoard;
+    unlockedCollection = newCollection;
     renderGrid();
+    updateCollectionUI();
 }
 
-// === 5. Tab Navigation ===
+// === Tab Nav ===
 tabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
         tabBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-
         tabContents.forEach(c => c.classList.add('hidden'));
         document.getElementById(btn.dataset.target).classList.remove('hidden');
     });
@@ -412,8 +421,8 @@ tabBtns.forEach(btn => {
 
 // Toast
 const toast = document.getElementById('toast');
-function showToast(msg) {
-    toast.innerText = msg;
+function showToast(m) {
+    toast.innerText = m;
     toast.classList.remove('hidden');
     setTimeout(() => toast.classList.add('hidden'), 2000);
 }
