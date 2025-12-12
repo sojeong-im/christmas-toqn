@@ -158,7 +158,8 @@ function connectToFirebase(teamId) {
             // 2. Missions
             if (data.missions) {
                 userMissionStatus = data.missions;
-                updateMissionUI();
+                // updateMissionUI(); -> Deprecated: Re-render list to update button states (Done/Lock)
+                renderMissionList();
             }
 
             // 3. Game Board (Synced!)
