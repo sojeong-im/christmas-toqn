@@ -342,6 +342,24 @@ select:focus {
     cursor: default;
 }
 
+.mission-input {
+    width: 60px;
+    padding: 8px;
+    margin-right: 8px;
+    border: 2px solid #EEE;
+    border-radius: 12px;
+    font-size: 12px;
+    text-align: center;
+    outline: none;
+    transition: 0.2s;
+    background: #FAFAFA;
+}
+
+.mission-input:focus {
+    border-color: var(--primary-green);
+    background: white;
+}
+
 .locked-mission {
     background: #FAFAFA;
     box-shadow: none;

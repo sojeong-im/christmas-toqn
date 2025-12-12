@@ -59,7 +59,7 @@ const missionCategories = [
         title: "✔ 30점 미션",
         points: 30,
         items: [
-            { id: "m30_1", text: "신찾 1개" },
+            { id: "m30_1", text: "신찾 1개", hasInput: true },
             { id: "m30_2", text: "잎사귀 1회(금일만남 한정)" }
         ]
     },
@@ -280,9 +280,18 @@ function renderMissionList() {
                 const btnText = isMaxed ? '완료됨' : '완료하기';
                 const btnClass = isMaxed ? 'mission-btn-done' : 'mission-btn-repeat';
 
+                // Input Field Logic
+                let inputHtml = '';
+                if (item.hasInput && !isMaxed) {
+                    inputHtml = `<input type="text" class="mission-input" placeholder="번호뒷자리" id="input-${item.id}">`;
+                }
+
                 el.innerHTML = `
                     <div class="mission-status">
-                        <button class="${btnClass}" data-id="${item.id}" ${btnState}>${btnText}</button>
+                        <div style="display:flex; align-items:center;">
+                            ${inputHtml}
+                            <button class="${btnClass}" data-id="${item.id}" ${btnState}>${btnText}</button>
+                        </div>
                         <span class="mission-count-badge" id="count-${item.id}">${count}회${item.maxCount ? '/1' : ''}</span>
                     </div>
                     <div class="mission-detail">
@@ -295,6 +304,17 @@ function renderMissionList() {
                 if (!isMaxed) {
                     const btn = el.querySelector('.mission-btn-repeat');
                     btn.addEventListener('click', () => {
+                        // Validate Input
+                        if (item.hasInput) {
+                            const inputEl = document.getElementById(`input-${item.id}`);
+                            if (!inputEl.value.trim()) {
+                                alert("번호 뒷자리를 입력해주세요! 🔢");
+                                inputEl.focus();
+                                return;
+                            }
+                            // Optional: You could save inputEl.value to DB here if needed
+                        }
+
                         if (confirm(`"${item.text.replace(/<[^>]*>?/gm, '')}" 미션을 완료하셨나요?`)) {
                             performMissionAction(cat.points, item.id);
                             showToast(`✅ 재료 획득! +${cat.points}P`);
