@@ -204,6 +204,16 @@
             <p style="font-size: 12px; color: #888;">* 이벤트 당첨이나 패널티 적용 시 사용하세요.</p>
         </div>
 
+        <!-- Danger Zone -->
+        <div class="control-panel"
+            style="border-top: 3px solid #ff5252; background: #fff5f5; border-radius: 8px; padding: 15px; margin-top:20px;">
+            <h3 style="color: #d32f2f; margin-top:0;">⚠️ 위험 구역 (Danger Zone)</h3>
+            <p style="font-size:13px; color:#c62828;">모든 팀의 점수, 미션 기록, 게임판 상태, 로그를 완전히 삭제하고 초기화합니다.</p>
+            <button onclick="resetAllData()"
+                style="width:100%; padding:12px; font-weight:bold; background:#d32f2f; color:white; border:none; border-radius:6px; cursor:pointer;">🚨
+                모든 데이터 초기화 (Reset All)</button>
+        </div>
+
         <!-- Activity Log -->
         <div class="log-section">
             <h3>📜 실시간 활동 로그 (최신순)</h3>
@@ -255,7 +265,7 @@
             ['1', '2', '3', '4'].forEach(teamId => {
                 const docId = `team_${teamId.padStart(2, '0')}`;
                 onSnapshot(doc(db, "teams", docId), (snap) => {
-                    if(snap.exists()) {
+                    if (snap.exists()) {
                         const data = snap.data();
                         teamDataStore[teamId] = data;
                         updateCard(teamId, data);
@@ -288,14 +298,14 @@
                 <div style="font-size:12px; margin-top:4px; color:#888;">미션 수행: ${totalMissions}회</div>
             `;
         }
-        
+
         function renderAllLogs() {
             // Aggregate logs from all teams
             let allLogs = [];
-            
+
             Object.keys(teamDataStore).forEach(teamId => {
                 const data = teamDataStore[teamId];
-                if(data.logs && Array.isArray(data.logs)) {
+                if (data.logs && Array.isArray(data.logs)) {
                     data.logs.forEach(log => {
                         allLogs.push({
                             ...log,
@@ -311,21 +321,21 @@
             const tbody = document.getElementById('log-body');
             tbody.innerHTML = '';
 
-            if(allLogs.length === 0) {
+            if (allLogs.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="empty-log">아직 기록이 없습니다.</td></tr>';
                 return;
             }
 
             allLogs.forEach(log => {
                 const tr = document.createElement('tr');
-                const timeStr = log.time ? new Date(log.time).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'}) : '-';
-                
+                const timeStr = log.time ? new Date(log.time).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-';
+
                 tr.innerHTML = `
                     <td>${timeStr}</td>
                     <td><span class="tag tag-team">${log.teamId}팀</span></td>
                     <td><span class="tag tag-zone">${log.zone || '?'}구역</span></td>
                     <td>${log.text}</td>
-                    <td style="font-weight:bold; color:${log.pts >= 0 ? 'green':'red'}">${log.pts > 0 ? '+':''}${log.pts}</td>
+                    <td style="font-weight:bold; color:${log.pts >= 0 ? 'green' : 'red'}">${log.pts > 0 ? '+' : ''}${log.pts}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -346,6 +356,35 @@
                 });
                 alert("적용 완료!");
                 document.getElementById('manual-amount').value = '';
+            }
+        };
+
+        // Reset All Data
+        window.resetAllData = async () => {
+            if (!confirm("🚨 경고: 정말 모든 팀의 점수, 미션, 게임판, 로그를 초기화하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다!")) return;
+            if (!prompt("초기화하려면 '초기화'라고 입력하세요.") === "초기화") return;
+
+            const teams = ['1', '2', '3', '4'];
+            const initialData = {
+                coins: 0,
+                missions: {},
+                board: Array(16).fill(null),
+                collection: [],
+                logs: []
+            };
+
+            try {
+                // Use setDoc to overwrite completely
+                await Promise.all(teams.map(id => {
+                    const docId = `team_${id.padStart(2, '0')}`;
+                    return import('./firebase-config.js')
+                        .then(module => module.setDoc(module.doc(module.db, "teams", docId), initialData));
+                }));
+                alert("✨ 모든 데이터가 깨끗하게 초기화되었습니다!");
+                location.reload();
+            } catch (e) {
+                console.error(e);
+                alert("초기화 실패: " + e.message);
             }
         };
     </script>
