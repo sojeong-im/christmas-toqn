@@ -34,35 +34,37 @@ const collectionBar = document.getElementById('collection-bar');
 // === Mission Data ===
 const missionCategories = [
     {
-        title: "✔ 10점 미션 (기본)",
-        points: 10,
+        title: "✔ 5점 미션",
+        points: 5,
         items: [
-            { id: "m10_1", text: "기도문 작성 1회" },
-            { id: "m10_2", text: "말걸기 10회" },
-            { id: "m10_3", text: "DM/메시지 10회 보내기" },
-            { id: "m10_4", text: "거점 방문 1회" },
-            { id: "m10_5", text: "지인 안부 연락 1회" },
-            { id: "m10_6", text: "티엠 1회 (생티엠·소모임·노방 등)" },
-            { id: "m10_7", text: "연말 감사 메시지 카드 1개" },
-            { id: "m10_8", text: "팀원 칭찬 3회" },
-            { id: "m10_9", text: "스탑 1회" },
-            { id: "m10_10", text: "연말 버킷 3개 작성 및 공유" }
+            { id: "m5_1", text: "기도문 작성 1회<br><span style='font-size:11px; color:#888'>(1인 최대 1회)</span>" },
+            { id: "m5_2", text: "팀원 칭찬 3회<br><span style='font-size:11px; color:#888'>(1인 최대 3회)</span>" },
+            { id: "m5_3", text: "연말 감사 편지 1회(5줄 이상)<br><span style='font-size:11px; color:#888'>영가족/윗사명자(최대 1명)</span>" }
         ]
     },
     {
-        title: "✔ 30점 미션 (도전)",
+        title: "✔ 10점 미션",
+        points: 10,
+        items: [
+            { id: "m10_1", text: "말걸기 20회" },
+            { id: "m10_2", text: "스탑 3회" },
+            { id: "m10_3", text: "DM노방 10회 보내기" },
+            { id: "m10_4", text: "거점 방문 10명" },
+            { id: "m10_5", text: "섬김 모임 후 거점 다시 방문" },
+            { id: "m10_6", text: "지인 안부 연락 10회" },
+            { id: "m10_7", text: "티엠 5회 시도<br><span style='font-size:11px; color:#888'>(생티엠·소모임·노방·메리트 포함)</span>" }
+        ]
+    },
+    {
+        title: "✔ 30점 미션",
         points: 30,
         items: [
             { id: "m30_1", text: "신찾 1개" },
-            { id: "m30_2", text: "섬김 모임 후 거점 재방문" },
-            { id: "m30_3", text: "크리스마스 분위기 사진 3장" },
-            { id: "m30_4", text: "팀원 1명에게 선물 전달" },
-            { id: "m30_5", text: "잎사귀 1회" },
-            { id: "m30_6", text: "연말 감사 편지 1통" }
+            { id: "m30_2", text: "잎사귀 1회(금일만남 한정)" }
         ]
     },
     {
-        title: "✔️ 스페셜 미션",
+        title: "✔ 스페셜 미션",
         points: 50,
         items: [
             { id: "m50_1", text: "컨펌된 타찾 (50점)" }
@@ -72,10 +74,10 @@ const missionCategories = [
         title: "🌟 보너스 미션 (30점)",
         points: 30,
         items: [
-            { id: "mb_1", text: "빨간색 아이템 5개 찾기" },
-            { id: "mb_2", text: "트리 모양 만들고 사진 찍기" },
-            { id: "mb_3", text: "새부기 포즈로 팀 사진 찍기" },
-            { id: "mb_4", text: "캐롤 제목 맞히기 퀴즈" }
+            { id: "mb_1", text: "새부기 포즈로 구역별 사진 찍기<br><span style='font-size:11px; color:#888'>주제: 이심전심 (1등 +200점)</span>" },
+            { id: "mb_2", text: "캐롤 제목 맞히기 퀴즈<br><span style='font-size:11px; color:#888'>전주듣고 맞추기(동메 인증)</span>" },
+            { id: "mb_3", text: "빨간색 아이템 5개 찾기" },
+            { id: "mb_4", text: "트리와 함께 사진 찍기<br><span style='font-size:11px; color:#888'>가장 큰 트리팀 +50점</span>" }
         ]
     }
 ];
