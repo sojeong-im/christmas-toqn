@@ -95,7 +95,6 @@ const missionCategories = [
             {
                 id: "mb_4",
                 text: "트리와 함께 사진 찍기<br><span style='font-size:11px; color:#888'>가장 큰 트리팀 +50점</span>",
-                // unlocking now or default
                 maxCount: 1
             }
         ]
