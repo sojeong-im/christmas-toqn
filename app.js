@@ -71,13 +71,33 @@ const missionCategories = [
         ]
     },
     {
-        title: "🌟 보너스 미션 (30점)",
+        title: "🌟 보너스 미션 (30점/1회한정)",
         points: 30,
         items: [
-            { id: "mb_1", text: "새부기 포즈로 구역별 사진 찍기<br><span style='font-size:11px; color:#888'>주제: 이심전심 (1등 +200점)</span>" },
-            { id: "mb_2", text: "캐롤 제목 맞히기 퀴즈<br><span style='font-size:11px; color:#888'>전주듣고 맞추기(동메 인증)</span>" },
-            { id: "mb_3", text: "빨간색 아이템 5개 찾기" },
-            { id: "mb_4", text: "트리와 함께 사진 찍기<br><span style='font-size:11px; color:#888'>가장 큰 트리팀 +50점</span>" }
+            {
+                id: "mb_1",
+                text: "새부기 포즈로 구역별 사진 찍기<br><span style='font-size:11px; color:#888'>주제: 이심전심 (1등 +200점)</span>",
+                unlockTime: "17:00", // 5 PM
+                maxCount: 1
+            },
+            {
+                id: "mb_2",
+                text: "캐롤 제목 맞히기 퀴즈<br><span style='font-size:11px; color:#888'>전주듣고 맞추기(동메 인증)</span>",
+                unlockTime: "16:00", // 4 PM
+                maxCount: 1
+            },
+            {
+                id: "mb_3",
+                text: "빨간색 아이템 5개 찾기",
+                unlockTime: "17:00", // 5 PM
+                maxCount: 1
+            },
+            {
+                id: "mb_4",
+                text: "트리와 함께 사진 찍기<br><span style='font-size:11px; color:#888'>가장 큰 트리팀 +50점</span>",
+                // unlocking now or default
+                maxCount: 1
+            }
         ]
     }
 ];
@@ -209,31 +229,74 @@ function updateCollectionUI() {
 // === 3. Mission Actions ===
 function renderMissionList() {
     missionListEl.innerHTML = '';
+
+    // Get Current Time (HH:MM string comparison is enough for same day)
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const currentTimeStr = `${hours}:${minutes}`;
+
     missionCategories.forEach(cat => {
         const section = document.createElement('div');
         section.innerHTML = `<div class="section-title">${cat.title}</div>`;
 
         cat.items.forEach(item => {
             const count = (userMissionStatus[item.id] || 0);
+
+            // 1. Check Lock Status
+            let isLocked = false;
+            let lockText = "";
+            if (item.unlockTime && currentTimeStr < item.unlockTime) {
+                isLocked = true;
+                lockText = `🔒 ${item.unlockTime} 공개 예정`;
+            }
+
+            // 2. Check Max Count Status (For Bonus Missions)
+            let isMaxed = false;
+            if (item.maxCount && count >= item.maxCount) {
+                isMaxed = true;
+            }
+
             const el = document.createElement('div');
             el.className = 'mission-item';
-            el.innerHTML = `
-                <div class="mission-status">
-                    <button class="mission-btn-repeat" data-id="${item.id}" data-text="${item.text}">완료하기</button>
-                    <span class="mission-count-badge" id="count-${item.id}">${count}회</span>
-                </div>
-                <div class="mission-detail">
-                    <div class="mission-text">${item.text}</div>
-                    <span class="mission-points">+${cat.points}점</span>
-                </div>
-            `;
-            const btn = el.querySelector('.mission-btn-repeat');
-            btn.addEventListener('click', () => {
-                if (confirm(`"${item.text}" 미션을 1회 완료하셨나요?`)) {
-                    performMissionAction(cat.points, item.id);
-                    showToast(`✅ 재료 획득! +${cat.points}P`);
+
+            // Render Content
+            if (isLocked) {
+                // Locked View
+                el.classList.add('locked-mission');
+                el.innerHTML = `
+                    <div style="flex:1; text-align:center; color:#aaa; font-size:14px; font-weight:700;">
+                        ${lockText}
+                    </div>
+                `;
+            } else {
+                // Normal View
+                const btnState = isMaxed ? 'disabled' : '';
+                const btnText = isMaxed ? '완료됨' : '완료하기';
+                const btnClass = isMaxed ? 'mission-btn-done' : 'mission-btn-repeat';
+
+                el.innerHTML = `
+                    <div class="mission-status">
+                        <button class="${btnClass}" data-id="${item.id}" ${btnState}>${btnText}</button>
+                        <span class="mission-count-badge" id="count-${item.id}">${count}회${item.maxCount ? '/1' : ''}</span>
+                    </div>
+                    <div class="mission-detail">
+                        <div class="mission-text">${item.text}</div>
+                        <span class="mission-points">+${cat.points}점</span>
+                    </div>
+                `;
+
+                // Add Event Listener if active
+                if (!isMaxed) {
+                    const btn = el.querySelector('.mission-btn-repeat');
+                    btn.addEventListener('click', () => {
+                        if (confirm(`"${item.text.replace(/<[^>]*>?/gm, '')}" 미션을 완료하셨나요?`)) {
+                            performMissionAction(cat.points, item.id);
+                            showToast(`✅ 재료 획득! +${cat.points}P`);
+                        }
+                    });
                 }
-            });
+            }
             section.appendChild(el);
         });
         missionListEl.appendChild(section);

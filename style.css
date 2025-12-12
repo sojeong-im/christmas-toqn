@@ -331,6 +331,24 @@ select:focus {
     color: white;
 }
 
+.mission-btn-done {
+    border: none;
+    background: #EEE;
+    color: #AAA;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: default;
+}
+
+.locked-mission {
+    background: #FAFAFA;
+    box-shadow: none;
+    border: 1px dashed #DDD;
+    opacity: 0.8;
+}
+
 .mission-detail {
     flex: 1;
     margin-left: 16px;
