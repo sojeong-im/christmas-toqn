@@ -116,6 +116,55 @@
             border-radius: 12px;
             text-align: center;
         }
+
+        /* Log Table */
+        .log-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px dashed #eee;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f9f9f9;
+            color: #555;
+            font-weight: 700;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .tag-team {
+            background: #E53935;
+        }
+
+        .tag-zone {
+            background: #43A047;
+        }
+
+        .empty-log {
+            padding: 20px;
+            text-align: center;
+            color: #aaa;
+        }
     </style>
 </head>
 
@@ -135,7 +184,6 @@
 
         <!-- Live Score -->
         <div class="dashboard-grid" id="score-board">
-            <!-- Injected by JS -->
             <div class="team-card">로딩중...</div>
         </div>
 
@@ -156,6 +204,29 @@
             <p style="font-size: 12px; color: #888;">* 이벤트 당첨이나 패널티 적용 시 사용하세요.</p>
         </div>
 
+        <!-- Activity Log -->
+        <div class="log-section">
+            <h3>📜 실시간 활동 로그 (최신순)</h3>
+            <div style="max-height: 500px; overflow-y: auto;">
+                <table id="log-table">
+                    <thead>
+                        <tr>
+                            <th width="80">시간</th>
+                            <th width="60">팀</th>
+                            <th width="60">구역</th>
+                            <th>내용</th>
+                            <th width="60">점수</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-body">
+                        <tr>
+                            <td colspan="5" class="empty-log">데이터 수신 중...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Log Link -->
         <div style="margin-top: 20px; text-align: right;">
             <a href="index.html" style="color: #666; text-decoration: none;">메인 페이지로 돌아가기 →</a>
@@ -165,10 +236,10 @@
     <script type="module">
         import { db, doc, onSnapshot, updateDoc, increment } from './firebase-config.js';
 
-        // Simple Password Check (Client-side only, not secure but enough for this event)
+        // Simple Password Check
         window.checkLogin = () => {
             const pw = document.getElementById('admin-pw').value;
-            if (pw === '1225') { // Password: Christmas
+            if (pw === '1225') {
                 document.getElementById('login-overlay').style.display = 'none';
                 document.getElementById('admin-panel').style.display = 'block';
                 initDashboard();
@@ -177,13 +248,19 @@
             }
         };
 
+        const teamDataStore = {}; // { '1': { ...data }, '2': ... }
+
         function initDashboard() {
             // Listen to all 4 teams
             ['1', '2', '3', '4'].forEach(teamId => {
                 const docId = `team_${teamId.padStart(2, '0')}`;
                 onSnapshot(doc(db, "teams", docId), (snap) => {
-                    const data = snap.data() || { coins: 0 };
-                    updateCard(teamId, data);
+                    if(snap.exists()) {
+                        const data = snap.data();
+                        teamDataStore[teamId] = data;
+                        updateCard(teamId, data);
+                        renderAllLogs();
+                    }
                 });
             });
         }
@@ -210,6 +287,48 @@
                 <div class="team-score">${(data.coins || 0).toLocaleString()}점</div>
                 <div style="font-size:12px; margin-top:4px; color:#888;">미션 수행: ${totalMissions}회</div>
             `;
+        }
+        
+        function renderAllLogs() {
+            // Aggregate logs from all teams
+            let allLogs = [];
+            
+            Object.keys(teamDataStore).forEach(teamId => {
+                const data = teamDataStore[teamId];
+                if(data.logs && Array.isArray(data.logs)) {
+                    data.logs.forEach(log => {
+                        allLogs.push({
+                            ...log,
+                            teamId: teamId
+                        });
+                    });
+                }
+            });
+
+            // Sort by time DESC
+            allLogs.sort((a, b) => new Date(b.time) - new Date(a.time));
+
+            const tbody = document.getElementById('log-body');
+            tbody.innerHTML = '';
+
+            if(allLogs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-log">아직 기록이 없습니다.</td></tr>';
+                return;
+            }
+
+            allLogs.forEach(log => {
+                const tr = document.createElement('tr');
+                const timeStr = log.time ? new Date(log.time).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'}) : '-';
+                
+                tr.innerHTML = `
+                    <td>${timeStr}</td>
+                    <td><span class="tag tag-team">${log.teamId}팀</span></td>
+                    <td><span class="tag tag-zone">${log.zone || '?'}구역</span></td>
+                    <td>${log.text}</td>
+                    <td style="font-weight:bold; color:${log.pts >= 0 ? 'green':'red'}">${log.pts > 0 ? '+':''}${log.pts}</td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
         window.manualUpdate = async (multiplier) => {

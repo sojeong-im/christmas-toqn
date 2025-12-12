@@ -1,4 +1,9 @@
-import { db, doc, setDoc, updateDoc, onSnapshot, increment } from './firebase-config.js';
+// Import arrayUnion for logs
+import { db, doc, setDoc, updateDoc, onSnapshot, increment, arrayUnion } from './firebase-config.js';
+
+// ... (rest of imports)
+
+// ...
 
 // === Global State ===
 let userTeam = null;
@@ -316,7 +321,9 @@ function renderMissionList() {
                         }
 
                         if (confirm(`"${item.text.replace(/<[^>]*>?/gm, '')}" 미션을 완료하셨나요?`)) {
-                            performMissionAction(cat.points, item.id);
+                            // Extract plain text for log
+                            const plainText = item.text.replace(/<[^>]*>?/gm, '');
+                            performMissionAction(cat.points, item.id, plainText);
                             showToast(`✅ 재료 획득! +${cat.points}P`);
                         }
                     });
@@ -328,11 +335,23 @@ function renderMissionList() {
     });
 }
 
-async function performMissionAction(points, missionId) {
+// Update function signature to accept log text
+async function performMissionAction(points, missionId, missionText = "") {
     const docId = `team_${userTeam.padStart(2, '0')}`;
     const updates = {
         coins: increment(points)
     };
+
+    // Create Log Entry
+    const logEntry = {
+        mId: missionId,
+        text: missionText || missionId,
+        pts: points,
+        zone: userZone,
+        time: new Date().toISOString()
+    };
+    updates.logs = arrayUnion(logEntry);
+
     if (missionId) {
         updates[`missions.${missionId}`] = increment(1);
     }
