@@ -230,11 +230,10 @@ function updateCollectionUI() {
 function renderMissionList() {
     missionListEl.innerHTML = '';
 
-    // Get Current Time (HH:MM string comparison is enough for same day)
+    // Get Current Time (Minute based comparison)
     const now = new Date();
-    const hours = now.getHours().toString().padStart(2, '0');
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    const currentTimeStr = `${hours}:${minutes}`;
+    const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
+    // Debug: console.log("Current Time (min):", currentTotalMinutes);
 
     missionCategories.forEach(cat => {
         const section = document.createElement('div');
@@ -243,12 +242,18 @@ function renderMissionList() {
         cat.items.forEach(item => {
             const count = (userMissionStatus[item.id] || 0);
 
-            // 1. Check Lock Status
+            // 1. Check Lock Status (Detailed Logic)
             let isLocked = false;
             let lockText = "";
-            if (item.unlockTime && currentTimeStr < item.unlockTime) {
-                isLocked = true;
-                lockText = `🔒 ${item.unlockTime} 공개 예정`;
+
+            if (item.unlockTime) {
+                const [uh, um] = item.unlockTime.split(':').map(Number);
+                const unlockTotalMinutes = uh * 60 + um;
+
+                if (currentTotalMinutes < unlockTotalMinutes) {
+                    isLocked = true;
+                    lockText = `🔒 ${item.unlockTime} 공개 예정`;
+                }
             }
 
             // 2. Check Max Count Status (For Bonus Missions)
