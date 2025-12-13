@@ -338,16 +338,19 @@ function renderMissionList() {
 
 // Update function signature to accept log text
 async function performMissionAction(points, missionId, missionText = "") {
+    // === DOUBLE POINTS EVENT ===
+    const finalPoints = points * 2;
+
     const docId = `team_${userTeam.padStart(2, '0')}`;
     const updates = {
-        coins: increment(points)
+        coins: increment(finalPoints)
     };
 
     // Create Log Entry
     const logEntry = {
         mId: missionId,
         text: missionText || missionId,
-        pts: points,
+        pts: finalPoints,
         zone: userZone,
         time: new Date().toISOString()
     };
