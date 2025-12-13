@@ -184,13 +184,14 @@ function connectToFirebase(teamId) {
             updateCollectionUI();
 
         } else {
-            // Initialize Team Doc
-            setDoc(docRef, {
-                coins: 0,
-                missions: {},
-                board: Array(16).fill(null),
-                collection: []
-            });
+            // Initialize Team Doc -> DISABLED for safety during event
+            // setDoc(docRef, {
+            //     coins: 0,
+            //     missions: {},
+            //     board: Array(16).fill(null),
+            //     collection: []
+            // });
+            console.warn("Team document does not exist. Waiting for admin creation or connection.");
         }
     });
 }
