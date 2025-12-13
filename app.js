@@ -302,7 +302,7 @@ function renderMissionList() {
                     </div>
                     <div class="mission-detail">
                         <div class="mission-text">${item.text}</div>
-                        <span class="mission-points">+${cat.points}점</span>
+                        <span class="mission-points">+${cat.points}점 <span class="bonus-tag">x2</span></span>
                     </div>
                 `;
 
